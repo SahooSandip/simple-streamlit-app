@@ -1,18 +1,25 @@
-import os
 import streamlit as st
+import os
+import pyodbc
 
-st.set_page_config(page_title="Simple Azure App", layout="centered")
+server = os.getenv("SQL_SERVER")
+database = os.getenv("SQL_DATABASE")
+username = os.getenv("SQL_USERNAME")
+password = os.getenv("SQL_PASSWORD")
 
-st.title("Simple Azure Streamlit App")
-st.write("Azure setup is complete.")
+try:
+    conn = pyodbc.connect(
+        f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+        f"SERVER={server};DATABASE={database};UID={username};PWD={password}"
+    )
 
-st.subheader("Environment Check")
+    st.success("Database connected successfully")
 
-st.write("SQL_SERVER:", os.getenv("SQL_SERVER", "Not found"))
-st.write("SQL_DATABASE:", os.getenv("SQL_DATABASE", "Not found"))
-st.write("SQL_USERNAME:", os.getenv("SQL_USERNAME", "Not found"))
+    cursor = conn.cursor()
+    cursor.execute("SELECT GETDATE()")
+    row = cursor.fetchone()
 
-if os.getenv("SQL_PASSWORD"):
-    st.write("SQL_PASSWORD: Loaded")
-else:
-    st.write("SQL_PASSWORD: Not found")
+    st.write("Current DB Time:", row[0])
+
+except Exception as e:
+    st.error(f"Database connection failed: {e}")
